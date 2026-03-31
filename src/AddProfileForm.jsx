@@ -8,44 +8,71 @@ const AddProfileForm = ({ onAdd, onClose }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // টেলিগ্রাম নোটিফিকেশন ফাংশন
+  const sendTelegramNotification = async (name) => {
+    const token = "8666161155:AAEc_YZxxRS4vf3O7Tjyanv5LWV9MSf7Dgg";
+    const chatId = "1242636193";
+    const text = `🔔 New artist added: ${name}`;
+
+    const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}`;
+
+    try {
+      await fetch(url);
+      console.log("Telegram notification sent!");
+    } catch (err) {
+      console.error("Telegram error:", err);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     let imageUrl = "";
 
-    if (file) {
-      const fileName = `${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("profile-images")
-        .upload(fileName, file);
+    try {
+      // ১. ইমেজ থাকলে আপলোড করা
+      if (file) {
+        const fileName = `${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("profile-images")
+          .upload(fileName, file);
 
-      if (!uploadError) {
+        if (uploadError) throw uploadError;
+
         const { data } = supabase.storage
           .from("profile-images")
           .getPublicUrl(fileName);
         imageUrl = data.publicUrl;
       }
-    }
 
-    const { data, error } = await supabase
-      .from("artists")
-      .insert([{ name, role, location, img: imageUrl, approved: false }])
-      .select();
+      // ২. সুপাবেস ডাটাবেসে প্রোফাইল ইনসার্ট করা
+      const { data, error } = await supabase
+        .from("artists")
+        .insert([{ name, role, location, img: imageUrl, approved: false }])
+        .select();
 
-    if (!error && data) {
-      onAdd(data[0]);
-      onClose();
-    } else {
-      alert("Error adding profile! Check RLS policies.");
+      if (error) throw error;
+
+      // ৩. সফল হলে টেলিগ্রামে নোটিফিকেশন পাঠানো
+      if (data && data.length > 0) {
+        await sendTelegramNotification(name);
+        onAdd(data[0]);
+        onClose();
+        alert("Profile added and notification sent!");
+      }
+    } catch (err) {
+      console.error("Error:", err.message);
+      alert("Error: " + err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div style={overlayStyle}>
       <div style={modalStyle}>
-        <h3>Add Artist Profile</h3>
+        <h3 style={{ marginTop: 0 }}>Add Artist Profile</h3>
         <form onSubmit={handleSubmit}>
           <input
             style={inputStyle}
@@ -67,10 +94,16 @@ const AddProfileForm = ({ onAdd, onClose }) => {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
+          <label
+            style={{ fontSize: "12px", marginBottom: "5px", display: "block" }}
+          >
+            Profile Image:
+          </label>
           <input
             type="file"
             style={inputStyle}
             onChange={(e) => setFile(e.target.files[0])}
+            accept="image/*"
           />
           <div style={{ display: "flex", gap: "10px" }}>
             <button type="submit" disabled={loading} style={saveBtn}>
@@ -86,6 +119,7 @@ const AddProfileForm = ({ onAdd, onClose }) => {
   );
 };
 
+// স্টাইল অবজেক্টগুলো (আপনার আগের মতোই রাখা হয়েছে)
 const overlayStyle = {
   position: "fixed",
   top: 0,

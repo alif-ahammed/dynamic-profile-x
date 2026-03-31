@@ -13,6 +13,23 @@ function App() {
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // const sendTelegramNotification = async (name) => {
+  //   const token = "8666161155:AAEc_YZxxRS4vf3O7Tjyanv5LWV9MSf7Dgg";
+  //   const chatId = "1242636193";
+  //   const text = `🔔 New artist added: ${name}`;
+
+  //   const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}`;
+
+  //   try {
+  //     const response = await fetch(url);
+  //     if (response.ok) {
+  //       console.log("Notification sent successfully!");
+  //     }
+  //   } catch (err) {
+  //     console.error("Failed to send notification:", err);
+  //   }
+  // };
+
   // পাসওয়ার্ড ইনপুটের জন্য নতুন স্টেট
   const [showPassModal, setShowPassModal] = useState(false);
   const [passInput, setPassInput] = useState("");
@@ -158,7 +175,7 @@ function App() {
       </div>
 
       <h1 style={{ textAlign: "center", color: "#2c3e50" }}>
-        {isAdmin ? "🛠️ Admin Dashboard" : "🌟 আর্টিস্ট পোর্টফোলিও গ্যালারি"}
+        {isAdmin ? "🛠️ Admin Dashboard" : "Artist Portfolio Gallery"}
       </h1>
 
       <div style={{ textAlign: "center", marginBottom: "30px" }}>
