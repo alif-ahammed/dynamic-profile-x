@@ -259,9 +259,7 @@ function App() {
             </div>
           ))
         ) : (
-          <p style={{ color: "red", fontSize: "18px" }}>
-            কোনো তথ্য পাওয়া যায়নি!
-          </p>
+          <p style={{ color: "red", fontSize: "18px" }}>No artists found!</p>
         )}
       </div>
       <Footer />
