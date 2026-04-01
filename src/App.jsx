@@ -12,56 +12,14 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("time"); // ডিফল্ট: Newest First
 
-  // const sendTelegramNotification = async (name) => {
-  //   const token = "8666161155:AAEc_YZxxRS4vf3O7Tjyanv5LWV9MSf7Dgg";
-  //   const chatId = "1242636193";
-  //   const text = `🔔 New artist added: ${name}`;
-
-  //   const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}`;
-
-  //   try {
-  //     const response = await fetch(url);
-  //     if (response.ok) {
-  //       console.log("Notification sent successfully!");
-  //     }
-  //   } catch (err) {
-  //     console.error("Failed to send notification:", err);
-  //   }
-  // };
-
-  // পাসওয়ার্ড ইনপুটের জন্য নতুন স্টেট
   const [showPassModal, setShowPassModal] = useState(false);
   const [passInput, setPassInput] = useState("");
-
-  const handleAdminToggle = () => {
-    if (!isAdmin) {
-      setShowPassModal(true); // সরাসরি প্রম্পট না দেখিয়ে মোডাল দেখাবে
-    } else {
-      setIsAdmin(false);
-    }
-  };
-
-  const checkPassword = () => {
-    if (passInput === "A281125H") {
-      setIsAdmin(true);
-      setShowPassModal(false);
-      setPassInput("");
-    } else {
-      alert("পাসওয়ার্ড সঠিক নয়!");
-    }
-  };
 
   useEffect(() => {
     fetchArtists();
   }, []);
-
-  const handleUpdateArtist = (updatedArtist) => {
-    if (!updatedArtist) return;
-    setArtists(
-      artists.map((a) => (a.id === updatedArtist.id ? updatedArtist : a)),
-    );
-  };
 
   const fetchArtists = async () => {
     setLoading(true);
@@ -78,14 +36,38 @@ function App() {
     setLoading(false);
   };
 
+  const handleAdminToggle = () => {
+    if (!isAdmin) {
+      setShowPassModal(true);
+    } else {
+      setIsAdmin(false);
+    }
+  };
+
+  const checkPassword = () => {
+    if (passInput === "A281125H") {
+      setIsAdmin(true);
+      setShowPassModal(false);
+      setPassInput("");
+    } else {
+      alert("পাসওয়ার্ড সঠিক নয়!");
+    }
+  };
+
   const handleAddArtist = (newArtist) => {
     setArtists([newArtist, ...artists]);
+  };
+
+  const handleUpdateArtist = (updatedArtist) => {
+    if (!updatedArtist) return;
+    setArtists(
+      artists.map((a) => (a.id === updatedArtist.id ? updatedArtist : a)),
+    );
   };
 
   const deleteArtist = async (id) => {
     if (window.confirm("আপনি কি নিশ্চিতভাবে এটি ডিলিট করতে চান?")) {
       const { error } = await supabase.from("artists").delete().eq("id", id);
-
       if (!error) {
         setArtists(artists.filter((a) => a.id !== id));
       } else {
@@ -109,15 +91,26 @@ function App() {
     }
   };
 
-  const filteredArtists = artists.filter((artist) => {
-    const search = searchTerm.toLowerCase();
-    const matchesSearch =
-      artist.name.toLowerCase().includes(search) ||
-      artist.role.toLowerCase().includes(search) ||
-      artist.location.toLowerCase().includes(search);
+  // --- মেইন লজিক: ফিল্টার এবং তিনটি শর্টিং অপশন (Newest, Oldest, Name) ---
+  const displayArtists = artists
+    .filter((artist) => {
+      const search = searchTerm.toLowerCase();
+      const matchesSearch =
+        artist.name.toLowerCase().includes(search) ||
+        artist.role.toLowerCase().includes(search) ||
+        (artist.location && artist.location.toLowerCase().includes(search));
 
-    return isAdmin ? matchesSearch : matchesSearch && artist.approved;
-  });
+      return isAdmin ? matchesSearch : matchesSearch && artist.approved;
+    })
+    .sort((a, b) => {
+      if (sortBy === "name") {
+        return a.name.localeCompare(b.name);
+      } else if (sortBy === "oldest") {
+        return a.id - b.id; // পুরাতনগুলো আগে (ID ছোট থেকে বড়)
+      } else {
+        return b.id - a.id; // নতুনগুলো আগে (ডিফল্ট)
+      }
+    });
 
   if (loading)
     return (
@@ -135,17 +128,16 @@ function App() {
         minHeight: "100vh",
       }}
     >
-      {/* ১. পাসওয়ার্ড মোডাল সেকশন (যাতে স্টার দেখা যায়) */}
       {showPassModal && (
         <div style={modalOverlayStyle}>
           <div style={passBoxStyle}>
             <h3 style={{ marginBottom: "15px" }}>অ্যাডমিন লগইন</h3>
             <input
               type="password"
-              placeholder="পাসওয়ার্ড দিন..."
+              placeholder="পাসওয়ার্ড দিন..."
               value={passInput}
               onChange={(e) => setPassInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && checkPassword()} // এন্টার চাপলে লগইন হবে
+              onKeyDown={(e) => e.key === "Enter" && checkPassword()}
               style={passInputStyle}
             />
             <div
@@ -207,6 +199,29 @@ function App() {
         />
       )}
 
+      {/* শর্টিং ড্রপডাউন (৩টি অপশনসহ) */}
+      <div
+        style={{
+          marginBottom: "20px",
+          textAlign: "left",
+          maxWidth: "1200px",
+          margin: "0 auto 20px auto",
+        }}
+      >
+        <label style={{ marginRight: "10px", fontWeight: "bold" }}>
+          Sort By:
+        </label>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          style={selectStyle}
+        >
+          <option value="time">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="name">Alphabetical (A-Z)</option>
+        </select>
+      </div>
+
       <div
         style={{
           display: "flex",
@@ -215,8 +230,8 @@ function App() {
           justifyContent: "center",
         }}
       >
-        {filteredArtists.length > 0 ? (
-          filteredArtists.map((artist) => (
+        {displayArtists.length > 0 ? (
+          displayArtists.map((artist) => (
             <div key={artist.id} style={{ textAlign: "center" }}>
               <ProfileCard
                 name={artist.name}
@@ -230,14 +245,12 @@ function App() {
                   <p style={{ fontSize: "12px", margin: "5px 0" }}>
                     Status: {artist.approved ? "✅ Visible" : "⏳ Hidden"}
                   </p>
-
                   <button
                     onClick={() => setEditingArtist(artist)}
                     style={{ ...smallBtn, backgroundColor: "#3498db" }}
                   >
                     Edit
                   </button>
-
                   <button
                     onClick={() => toggleApprove(artist.id, artist.approved)}
                     style={{
@@ -247,7 +260,6 @@ function App() {
                   >
                     {artist.approved ? "Hide" : "Approve"}
                   </button>
-
                   <button
                     onClick={() => deleteArtist(artist.id)}
                     style={{ ...smallBtn, backgroundColor: "#e74c3c" }}
@@ -314,8 +326,6 @@ const smallBtn = {
   fontSize: "12px",
   fontWeight: "bold",
 };
-
-// নতুন পাসওয়ার্ড মোডাল স্টাইল
 const modalOverlayStyle = {
   position: "fixed",
   top: 0,
@@ -362,6 +372,14 @@ const cancelBtnStyle = {
   borderRadius: "5px",
   cursor: "pointer",
   fontWeight: "bold",
+};
+const selectStyle = {
+  padding: "8px 12px",
+  borderRadius: "5px",
+  border: "1px solid #ddd",
+  backgroundColor: "#fff",
+  cursor: "pointer",
+  fontSize: "14px",
 };
 
 export default App;
