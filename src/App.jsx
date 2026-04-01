@@ -181,7 +181,7 @@ function App() {
       <div style={{ textAlign: "center", marginBottom: "30px" }}>
         <input
           type="text"
-          placeholder="নাম, পেশা বা লোকেশন লিখে খুঁজুন..."
+          placeholder="Search by name, role, or location..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           style={searchStyle}
