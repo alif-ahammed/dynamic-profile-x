@@ -12,7 +12,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState("time"); // ডিফল্ট: Newest First
+  const [sortBy, setSortBy] = useState("time");
 
   const [showPassModal, setShowPassModal] = useState(false);
   const [passInput, setPassInput] = useState("");
@@ -91,7 +91,7 @@ function App() {
     }
   };
 
-  // --- মেইন লজিক: ফিল্টার এবং তিনটি শর্টিং অপশন (Newest, Oldest, Name) ---
+  // --- মেইন লজিক: ফিল্টার এবং চারটি শর্টিং অপশন ---
   const displayArtists = artists
     .filter((artist) => {
       const search = searchTerm.toLowerCase();
@@ -104,11 +104,13 @@ function App() {
     })
     .sort((a, b) => {
       if (sortBy === "name") {
-        return a.name.localeCompare(b.name);
+        return a.name.localeCompare(b.name); // A to Z
+      } else if (sortBy === "namez") {
+        return b.name.localeCompare(a.name); // Z to A (এখানেই আপনার ভুল ছিল)
       } else if (sortBy === "oldest") {
-        return a.id - b.id; // পুরাতনগুলো আগে (ID ছোট থেকে বড়)
+        return a.id - b.id; // Oldest First
       } else {
-        return b.id - a.id; // নতুনগুলো আগে (ডিফল্ট)
+        return b.id - a.id; // Newest First (Default)
       }
     });
 
@@ -166,7 +168,14 @@ function App() {
         </button>
       </div>
 
-      <h1 style={{ textAlign: "center", color: "#2c3e50" }}>
+      <h1
+        style={{
+          textAlign: "center",
+          color: "#2c3e50",
+          fontSize: "clamp(20px, 5vw, 32px)",
+          padding: "0 10px",
+        }}
+      >
         {isAdmin ? "🛠️ Admin Dashboard" : "Artist Portfolio Gallery"}
       </h1>
 
@@ -199,7 +208,6 @@ function App() {
         />
       )}
 
-      {/* শর্টিং ড্রপডাউন (৩টি অপশনসহ) */}
       <div
         style={{
           marginBottom: "20px",
@@ -219,6 +227,7 @@ function App() {
           <option value="time">Newest First</option>
           <option value="oldest">Oldest First</option>
           <option value="name">Alphabetical (A-Z)</option>
+          <option value="namez">Alphabetical (Z-A)</option>
         </select>
       </div>
 
@@ -239,7 +248,6 @@ function App() {
                 image={artist.img}
                 locat={artist.location}
               />
-
               {isAdmin && (
                 <div style={adminPanelStyle}>
                   <p style={{ fontSize: "12px", margin: "5px 0" }}>
@@ -279,7 +287,7 @@ function App() {
   );
 }
 
-// --- Styles ---
+// --- Styles (আগের মতোই আছে) ---
 const navBtnStyle = {
   padding: "10px 20px",
   backgroundColor: "#2c3e50",
@@ -301,12 +309,13 @@ const addBtnStyle = {
 };
 const searchStyle = {
   padding: "12px 20px",
-  width: "100%",
+  width: "90%",
   maxWidth: "450px",
   borderRadius: "30px",
   border: "2px solid #3498db",
   outline: "none",
   fontSize: "16px",
+  boxSizing: "border-box",
 };
 const adminPanelStyle = {
   marginTop: "10px",
