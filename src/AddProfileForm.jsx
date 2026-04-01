@@ -93,6 +93,7 @@ const AddProfileForm = ({ onAdd, onClose }) => {
             placeholder="Location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
+            required
           />
           <label
             style={{ fontSize: "12px", marginBottom: "5px", display: "block" }}

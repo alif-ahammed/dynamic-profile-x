@@ -11,10 +11,7 @@ const ProfileCard = ({ name, role, image, locat }) => {
         {role}
       </p>
 
-      {locat && (
-        <p style={{ color: "#95a5a6", fontSize: "14px" }}>📍 {locat}</p>
-      )}
-      {/* <p style={{ color: "#95a5a6", fontSize: "14px" }}>📍 {locat}</p> */}
+      <p style={{ color: "#95a5a6", fontSize: "14px" }}>📍 {locat}</p>
     </div>
   );
 };
